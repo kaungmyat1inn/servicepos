@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # ServicePOS
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-laravel-app
+    ports:
+      - "3001:8000"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db # Database မ run ခင် app ကို မ run စေချင်လို့ပါ
+    networks:
+      - laravel-network
+
+  # Database Service (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: mysql_db # ဒီ container name သို့ service name (db) ကို host အဖြစ်သုံးရမယ်
+    restart: always
+    environment:
+      MYSQL_DATABASE: mobileservice_db
+      MYSQL_USER: digitalmart
+      MYSQL_PASSWORD: Genius@2026
+      MYSQL_ROOT_PASSWORD: Genius@2026
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql # Data မပျောက်အောင် Volume ခံထားခြင်း
+    networks:
+      - laravel-network
+
+networks:
+  laravel-network:
+    driver: bridge
+
+volumes:
+  dbdata:

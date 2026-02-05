@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # ServicePOS
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: phoneservice/app:latest
+    container_name: phoneservice_app
+    restart: unless-stopped
+    ports:
+      - "3001:8000"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - laravel-network
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database Service (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: phoneservice_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: mobileservice_central
+      MYSQL_USER: phoneservice
+      MYSQL_PASSWORD: ${CENTRAL_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${CENTRAL_DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./tools/backup:/backup
+    networks:
+      - laravel-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${CENTRAL_DB_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  laravel-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
+
+# To use production config:
+# docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
